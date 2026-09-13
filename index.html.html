@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>屏東縣草埔國小 - 校車司機加班費計算系統</title>
+    <style>
+        :root {
+            --primary: #2b6cb0;
+            --primary-hover: #2c5282;
+            --bg: #f7fafc;
+            --card-bg: #ffffff;
+            --text: #2d3748;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a202c;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .config-panel {
+            background: #ebf8ff;
+            border: 1px solid #bee3f8;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4a5568;
+        }
+
+        .form-group input, .form-group select {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 0.95rem;
+        }
+
+        .input-card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            align-items: end;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-success {
+            background-color: #38a169;
+        }
+        .btn-success:hover {
+            background-color: #2f855a;
+        }
+
+        .btn-danger {
+            background-color: #e53e3e;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            border: 1px solid #cbd5e0;
+            padding: 8px 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #edf2f7;
+            color: #2d3748;
+        }
+
+        .total-row {
+            font-weight: bold;
+            background-color: #f7fafc;
+        }
+
+        .signature-section {
+            display: none;
+            margin-top: 40px;
+            justify-content: space-between;
+            font-size: 0.95rem;
+        }
+
+        .rule-hint {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        /* 列印樣式優化 */
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+                width: 100%;
+                max-width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .signature-section {
+                display: flex !important;
+            }
+            th, td {
+                border: 1px solid #000;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 id="titleDisplay">屏東縣草埔國小 115學年度 校車司機工資印領清冊</h1>
+
+    <!-- 標題與月份設定（非列印區） -->
+    <div class="config-panel no-print">
+        <div class="form-group" style="flex: 1;">
+            <label for="docMonth">印領清冊名稱 / 月份備註</label>
+            <input type="text" id="docMonth" value="115學年度" onchange="updateTitle()">
+        </div>
+        <div style="font-size: 0.85rem; color: #4a5568; background: #fff; padding: 8px 12px; border-radius: 5px; border: 1px solid #cbd5e0;">
+            📌 <strong>固定參數：</strong>平日月薪基數 $29,500$ 元（時薪 $\approx 122.92$ 元）｜ 休息日時薪 $196$ 元
+        </div>
+    </div>
+
+    <!-- 加班新增表單（非列印區） -->
+    <div class="input-card no-print">
+        <h3 style="margin-top:0; font-size:1rem; color:#4a5568;">新增加班紀錄</h3>
+        <div class="input-grid">
+            <div class="form-group">
+                <label for="driverName">駕駛姓名</label>
+                <input type="text" id="driverName" value="柳瑞岸">
+            </div>
+            <div class="form-group">
+                <label for="overtimeDate">加班日期</label>
+                <input type="date" id="overtimeDate">
+            </div>
+            <div class="form-group">
+                <label for="overtimeType">加班類型</label>
+                <select id="overtimeType" onchange="handleTypeChange()">
+                    <option value="weekday">1. 平日加班 (上限4小時)</option>
+                    <option value="saturday">2. 禮拜六 (休息日加班)</option>
+                    <option value="sunday">3. 禮拜日 (休假日加班)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="overtimeHours">當天加班時數</label>
+                <input type="number" id="overtimeHours" min="0.5" max="4" step="0.5" value="4">
+                <span class="rule-hint" id="hoursHint">上限 4 小時</span>
+            </div>
+            <div>
+                <button class="btn btn-success" style="width: 100%;" onclick="addRecord()">新增至清冊</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 清冊表格區 -->
+    <table id="overtimeTable">
+        <thead>
+            <tr>
+                <th>姓名</th>
+                <th>加班日期</th>
+                <th>加班類別</th>
+                <th>第1-2小時<br>(時數)</th>
+                <th>第3-8小時<br>(時數)</th>
+                <th>第9-12小時<br>(時數)</th>
+                <th>駕駛實領金額 (元)</th>
+                <th class="no-print">操作</th>
+            </tr>
+        </thead>
+        <tbody id="recordBody">
+            <!-- 動態新增 -->
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="6" style="text-align: right;">合計總金額：</td>
+                <td id="totalAmount">0 元</td>
+                <td class="no-print"></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <!-- 功能按鈕區 -->
+    <div style="margin-top: 20px; text-align: right;" class="no-print">
+        <button class="btn" onclick="window.print()">🖨️ 列印 / 匯出印領清冊 (PDF)</button>
+    </div>
+
+    <!-- 簽核欄位 (列印時呈現) -->
+    <div class="signature-section">
+        <div>製表(出車申請人)：</div>
+        <div>總務主任：</div>
+        <div>出納：</div>
+        <div>主計：</div>
+        <div>校長：</div>
+    </div>
+</div>
+
+<script>
+    // 固定參數（依規定鎖定）
+    const FIXED_MONTHLY_SALARY = 29500;
+    const FIXED_HOURLY_RATE = 196;
+
+    const records = [];
+
+    // 初始化日期為今天
+    document.getElementById('overtimeDate').valueAsDate = new Date();
+
+    function updateTitle() {
+        const m = document.getElementById('docMonth').value;
+        document.getElementById('titleDisplay').innerText = `屏東縣草埔國小 ${m} 校車司機工資印領清冊`;
+    }
+
+    function handleTypeChange() {
+        const type = document.getElementById('overtimeType').value;
+        const hoursInput = document.getElementById('overtimeHours');
+        const hint = document.getElementById('hoursHint');
+
+        if (type === 'weekday') {
+            hoursInput.max = 4;
+            hint.innerText = "上限 4 小時";
+            if (parseFloat(hoursInput.value) > 4) hoursInput.value = 4;
+        } else {
+            hoursInput.max = 12;
+            hint.innerText = "上限 12 小時";
+        }
+    }
+
+    function calculateFee(type, hours) {
+        let h1_2 = 0, h3_8 = 0, h9_12 = 0;
+        let amount = 0;
+
+        const hourlyBase = FIXED_MONTHLY_SALARY / 240; // 平日時薪基數 (29500/240)
+
+        if (type === 'weekday') {
+            // 平日加班 (最多4小時)
+            const validHours = Math.min(hours, 4);
+            h1_2 = Math.min(validHours, 2);
+            h3_8 = Math.min(Math.max(validHours - 2, 0), 2);
+            amount = (hourlyBase * (4/3) * h1_2) + (hourlyBase * (5/3) * h3_8);
+        } else if (type === 'saturday') {
+            // 禮拜六 休息日 (時薪196元，最多12小時)
+            const validHours = Math.min(hours, 12);
+            h1_2 = Math.min(validHours, 2);
+            h3_8 = Math.min(Math.max(validHours - 2, 0), 6);
+            h9_12 = Math.min(Math.max(validHours - 8, 0), 4);
+            amount = (FIXED_HOURLY_RATE * (4/3) * h1_2) + (FIXED_HOURLY_RATE * (5/3) * h3_8) + (FIXED_HOURLY_RATE * (8/3) * h9_12);
+        } else if (type === 'sunday') {
+            // 禮拜日 休假日 (月薪基數，最多12小時)
+            const validHours = Math.min(hours, 12);
+            h1_2 = Math.min(validHours, 2);
+            h3_8 = Math.min(Math.max(validHours - 2, 0), 6);
+            h9_12 = Math.min(Math.max(validHours - 8, 0), 4);
+            amount = (hourlyBase * (4/3) * h1_2) + (hourlyBase * (5/3) * h3_8) + (hourlyBase * 2 * h9_12);
+        }
+
+        return {
+            h1_2, h3_8, h9_12,
+            amount: Math.round(amount) // 四捨五入取整數
+        };
+    }
+
+    function addRecord() {
+        const name = document.getElementById('driverName').value.trim();
+        const date = document.getElementById('overtimeDate').value;
+        const type = document.getElementById('overtimeType').value;
+        let hours = parseFloat(document.getElementById('overtimeHours').value);
+
+        if (!name || !date || isNaN(hours) || hours <= 0) {
+            alert('請填寫完整的加班資料！');
+            return;
+        }
+
+        // 上限檢查
+        const maxLimit = (type === 'weekday') ? 4 : 12;
+        if (hours > maxLimit) {
+            alert(`${type === 'weekday' ? '平日加班' : '休息日/例假日加班'}單日上限為 ${maxLimit} 小時，已自動調整為 ${maxLimit} 小時。`);
+            hours = maxLimit;
+            document.getElementById('overtimeHours').value = maxLimit;
+        }
+
+        records.push({ name, date, type, hours });
+        renderTable();
+    }
+
+    function deleteRecord(index) {
+        records.splice(index, 1);
+        renderTable();
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('recordBody');
+        tbody.innerHTML = '';
+        let total = 0;
+
+        const typeMap = {
+            weekday: '平日加班',
+            saturday: '禮拜六(休息日)',
+            sunday: '禮拜日(休假日)'
+        };
+
+        records.forEach((rec, idx) => {
+            const calc = calculateFee(rec.type, rec.hours);
+            total += calc.amount;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${rec.name}</td>
+                <td>${rec.date}</td>
+                <td>${typeMap[rec.type]}</td>
+                <td>${calc.h1_2 > 0 ? calc.h1_2 : '-'}</td>
+                <td>${calc.h3_8 > 0 ? calc.h3_8 : '-'}</td>
+                <td>${calc.h9_12 > 0 ? calc.h9_12 : '-'}</td>
+                <td>${calc.amount.toLocaleString()}</td>
+                <td class="no-print">
+                    <button class="btn btn-danger" onclick="deleteRecord(${idx})">刪除</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('totalAmount').innerText = total.toLocaleString() + ' 元';
+    }
+</script>
+
+</body>
+</html>
